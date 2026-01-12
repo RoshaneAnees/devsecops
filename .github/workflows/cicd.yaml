@@ -20,27 +20,22 @@ jobs:
         major_pattern: "BREAKING CHANGE"
         minor_pattern: "feat"
 
-    # --- FIX START: Create a lowercase variable for Docker ---
-    - name: Set Lowercase Owner
-      run: |
-        echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
-    # --- FIX END ---
-
     - name: Print version
       run: echo "VERSION=${{ steps.version.outputs.version }}"
 
+    # --- HARDCODED FIX: Using 'roshaneanees' directly to prevent case errors ---
     - name: Build Docker Image
       run: |
         VERSION=${{ steps.version.outputs.version }}
         docker build --no-cache \
-          -t ghcr.io/${{ env.OWNER_LC }}/devsecops-app:$VERSION \
-          -t ghcr.io/${{ env.OWNER_LC }}/devsecops-app:latest \
+          -t ghcr.io/roshaneanees/devsecops-app:$VERSION \
+          -t ghcr.io/roshaneanees/devsecops-app:latest \
           -f app/Dockerfile app/
 
     - name: Scan Image with Trivy
       uses: aquasecurity/trivy-action@0.20.0
       with:
-        image-ref: ghcr.io/${{ env.OWNER_LC }}/devsecops-app:latest
+        image-ref: ghcr.io/roshaneanees/devsecops-app:latest
         severity: CRITICAL,HIGH
         ignore-unfixed: true
         exit-code: "0"
@@ -51,8 +46,8 @@ jobs:
     - name: Push Images
       run: |
         VERSION=${{ steps.version.outputs.version }}
-        docker push ghcr.io/${{ env.OWNER_LC }}/devsecops-app:$VERSION
-        docker push ghcr.io/${{ env.OWNER_LC }}/devsecops-app:latest
+        docker push ghcr.io/roshaneanees/devsecops-app:$VERSION
+        docker push ghcr.io/roshaneanees/devsecops-app:latest
 
     - name: Create GHCR Secret
       run: |
@@ -69,7 +64,7 @@ jobs:
     - name: Patch Deployment With Version
       run: |
         VERSION=${{ steps.version.outputs.version }}
-        kubectl set image deployment/devsecops-app web=ghcr.io/${{ env.OWNER_LC }}/devsecops-app:$VERSION
+        kubectl set image deployment/devsecops-app web=ghcr.io/roshaneanees/devsecops-app:$VERSION
 
     - name: Wait for Rollout
       run: kubectl rollout status deployment/devsecops-app
